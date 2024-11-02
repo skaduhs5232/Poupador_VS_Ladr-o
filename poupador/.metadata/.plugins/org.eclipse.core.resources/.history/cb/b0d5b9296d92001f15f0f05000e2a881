@@ -1,0 +1,150 @@
+package agente;
+
+import algoritmo.ProgramaPoupador;
+import java.awt.Point;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+public class Poupador extends ProgramaPoupador {
+
+    private static final int CIMA = 1;
+    private static final int BAIXO = 2;
+    private static final int ESQUERDA = 3;
+    private static final int DIREITA = 4;
+    private static final int PARADO = 0;
+
+    private static final int PAREDE_PESO = -1500;
+    private static final int LADRAO_PESO = -500;
+    private static final int MOEDA_PESO = 100;
+    private static final int BANCO_PESO = 200;
+    private static final int VISITA_PESO = -5;
+
+    private int[][] mapaVisitas = new int[30][30];  // Mapa de visitas
+    private Point localBanco = new Point(-4, -4);   // Inicialmente desconhecido
+    private Random random = new Random();
+
+    // Variáveis para controle de coleta de moedas
+    private int moedas = 0;
+    private int tempoSemMoeda = 0;
+
+    // Função principal que será chamada a cada rodada
+    public int acao() {
+        // Atualiza o mapa de visitas com a posição atual
+        mapaVisitas[getPosicao().x][getPosicao().y]++;
+
+        // Heurísticas de peso para cada direção
+        Map<Integer, Integer> pesos = new HashMap<>();
+        pesos.put(CIMA, calcularPesoMovimento(CIMA));
+        pesos.put(BAIXO, calcularPesoMovimento(BAIXO));
+        pesos.put(ESQUERDA, calcularPesoMovimento(ESQUERDA));
+        pesos.put(DIREITA, calcularPesoMovimento(DIREITA));
+        pesos.put(PARADO, 0);  // Parado não tem peso
+
+        // Decisão final com base nos pesos calculados
+        return decidirMovimento(pesos);
+    }
+
+    // Função que calcula o peso para cada direção com base na heurística
+    private int calcularPesoMovimento(int direcao) {
+        int peso = 0;
+
+        Point proximaPosicao = getProximaPosicao(direcao);
+
+        if (isParede(proximaPosicao)) {
+            return PAREDE_PESO;
+        }
+
+        // Aumenta a prioridade para moedas
+        if (isMoeda(proximaPosicao)) {
+            peso += MOEDA_PESO;
+        }
+
+        // Aumenta a prioridade para o banco se já o conhecemos
+        if (isBanco(proximaPosicao)) {
+            peso += BANCO_PESO;
+        }
+
+        // Penaliza a presença de ladrões
+        if (isLadrao(proximaPosicao)) {
+            peso += LADRAO_PESO;
+        }
+
+        // Diminui o peso de áreas já visitadas
+        peso += VISITA_PESO * mapaVisitas[proximaPosicao.x][proximaPosicao.y];
+
+        return peso;
+    }
+
+    // Decide o movimento com base nos pesos calculados para cada direção
+    private int decidirMovimento(Map<Integer, Integer> pesos) {
+        int melhorMovimento = PARADO;
+        int maiorPeso = Integer.MIN_VALUE;
+
+        for (Map.Entry<Integer, Integer> entrada : pesos.entrySet()) {
+            if (entrada.getValue() > maiorPeso) {
+                melhorMovimento = entrada.getKey();
+                maiorPeso = entrada.getValue();
+            } else if (entrada.getValue() == maiorPeso) {
+                // Em caso de empate, escolhe aleatoriamente
+                if (random.nextBoolean()) {
+                    melhorMovimento = entrada.getKey();
+                }
+            }
+        }
+
+        return melhorMovimento;
+    }
+
+    // Função que retorna a próxima posição com base na direção escolhida
+    private Point getProximaPosicao(int direcao) {
+        Point posicaoAtual = getPosicao();
+        Point proximaPosicao = new Point(posicaoAtual);
+
+        switch (direcao) {
+            case CIMA:
+                proximaPosicao.y--;
+                break;
+            case BAIXO:
+                proximaPosicao.y++;
+                break;
+            case ESQUERDA:
+                proximaPosicao.x--;
+                break;
+            case DIREITA:
+                proximaPosicao.x++;
+                break;
+        }
+
+        return proximaPosicao;
+    }
+
+    // Verifica se a posição é uma parede ou fora do mapa
+    private boolean isParede(Point posicao) {
+        return posicao.x < 0 || posicao.y < 0 || posicao.x >= 30 || posicao.y >= 30 || sensor.getVisaoIdentificacao()[posicao.x][posicao.y] == 1;
+    }
+
+    // Verifica se há uma moeda na posição
+    private boolean isMoeda(Point posicao) {
+        return sensor.getVisaoIdentificacao()[posicao.x][posicao.y] == 4;
+    }
+
+    // Verifica se há um banco na posição
+    private boolean isBanco(Point posicao) {
+        return sensor.getVisaoIdentificacao()[posicao.x][posicao.y] == 3;
+    }
+
+    // Verifica se há um ladrão na posição
+    private boolean isLadrao(Point posicao) {
+        return sensor.getVisaoIdentificacao()[posicao.x][posicao.y] == 5;
+    }
+
+    // Função que retorna a distância Manhattan entre duas posições
+    private int calcularDistanciaManhattan(Point p1, Point p2) {
+        return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
+    }
+}

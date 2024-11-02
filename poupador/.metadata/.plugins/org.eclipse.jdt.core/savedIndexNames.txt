@@ -1,0 +1,4 @@
+INDEX VERSION 1.134+D:\faculdade(HD)\compartilhar-com-alunos (NOVO)\compartilhar-com-alunos (NOVO)\poupador\poupador\.metadata\.plugins\org.eclipse.jdt.core
+891242471.index
+1865797976.index
+1067094681.index
