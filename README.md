@@ -10,7 +10,6 @@ Este projeto é uma simulação de um agente inteligente, o **Poupador** 💰, q
 - [🧠 Estratégias do Poupador](#estratégias-do-poupador)
 - [⚙️ Configuração do Ambiente](#configuração-do-ambiente)
 - [🚀 Como Executar](#como-executar)
-- [🤝 Contribuições](#contribuições)
 
 ## 📜 Descrição do Projeto
 
